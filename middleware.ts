@@ -5,7 +5,6 @@ import { NextResponse } from 'next/server';
 const isPublickRoute=createRouteMatcher([
     "/sign-in",
     "/sign-up",
-    "/",
     "/home"
 ])
 const isPublicApikRoute=createRouteMatcher([
@@ -13,25 +12,36 @@ const isPublicApikRoute=createRouteMatcher([
 ])
 
 
+
 export default  clerkMiddleware(async (auth,req)=>{
     const {userId}= await auth();
     const currentUrl=new URL(req.url);
     const isAccessingDashboard=currentUrl.pathname==="/home"
    const isApRequest= currentUrl.pathname.startsWith("/api")
-   
-// taking loged  user to dashboard route 
+
+
+   const isRootUrl = currentUrl.pathname === "/";
+
+  
+   if (isRootUrl) {
+       return NextResponse.redirect(new URL(userId ? "/home" : "/sign-in", req.url));
+   }
+
+
+// taking loged  user to dashboard route
    if (userId && isPublickRoute(req) && !isAccessingDashboard) {
     return NextResponse.redirect(new URL("/home",req.url))
-    
+
+
    }
 //    not loged in
 if(!userId){
    if (!isPublickRoute(req) && !isPublicApikRoute(req) ) {
     return NextResponse.redirect(new URL("/sign-in",req.url))
-    
+
    }
    if (isApRequest && !isPublicApikRoute ) {
-    return NextResponse.redirect(new URL("/sign-up",req.url))   
+    return NextResponse.redirect(new URL("/sign-up",req.url))
    }
 }
 return NextResponse.next()
